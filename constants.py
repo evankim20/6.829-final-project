@@ -1,0 +1,2 @@
+BLOCK = 'BLK'
+TRANSACTION = 'TXN'
