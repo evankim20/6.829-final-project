@@ -211,3 +211,7 @@ class ProofOfWorkNetwork(Network):
                 print(f"{node.id} just mined a new block with id: ", new_block.block_id, f"prev data {node.ledger.most_recent_block.data} vs {new_block.data}")
                 self.broadcast_block(new_block, node.id)
         self.time += 1
+
+class ProofOfStakeNetwork(Network):
+    def __init__(self, nodes, latency_fn, schedule):
+        super().__init__(nodes, latency_fn, schedule)
