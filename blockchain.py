@@ -14,6 +14,7 @@ class Blockchain:
         self.unconfirmed_txns = []
         self.previous_data = set([genesis_block.data])
         self.current_nonce = 0
+        self.current_num_computations = 0
     
     def _same_hash(self, last_block, new_block):
         print(last_block.block_hash, new_block.previous_hash)
@@ -33,18 +34,33 @@ class Blockchain:
         self.most_recent_block = block
         self.previous_data.add(block.data)
         return True
+    
+    def add_block_centralized(self, block):
+        self.most_recent_block.next_block = block
+        self.most_recent_block = block
+        self.previous_data.add(block.data)
+        return True
 
     def add_incoming_txn(self, block):
         self.unconfirmed_txns.append(block)
 
     def proof_of_work(self, block):
         self.current_nonce += 1
+        self.current_num_computations += 1
         block.assign_nonce(self.current_nonce)
         h = block.hash()
         if h % 600 == 0:
             block.assign_hash()
-            return h
-        return None
+            num_computations = self.current_num_computations
+            self.current_num_computations = 0
+            return h, num_computations
+        return None, -1
+
+    def process_txn(self, pkt):
+        prev_block = self.most_recent_block
+        next_block_id = prev_block.block_id + 1
+        new_block = Block(block_id=next_block_id, data=pkt, timestamp=time.time())
+        return new_block
 
     def mine(self):
         if not self.unconfirmed_txns:
@@ -60,7 +76,7 @@ class Blockchain:
             next_block_data = self.unconfirmed_txns[0]
         next_block = Block(block_id=next_block_id, data=next_block_data, timestamp=time.time(), previous_hash=prev_block.block_hash)
 
-        proof = self.proof_of_work(next_block)
+        proof, num_computations = self.proof_of_work(next_block)
         # haven't found the correct nonce this round
         if proof is None:
             return None
@@ -71,4 +87,4 @@ class Blockchain:
             self.add_block(next_block)
         # remove the transaction from the list
         self.unconfirmed_txns.pop(0)
-        return next_block
+        return next_block, num_computations

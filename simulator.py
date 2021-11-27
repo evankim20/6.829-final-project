@@ -1,5 +1,5 @@
 from block import Block
-from network import Network
+from network import CentralizedNetwork, ProofOfWorkNetwork
 from node import Node
 from util import exponential_latency
 
@@ -18,7 +18,7 @@ if __name__ == "__main__":
     # if not os.path.exists(LOG_DIR):
     #     os.makedirs(LOG_DIR)
 
-    net = Network([], exponential_latency(25), {2: [(0, "first txn")], 100: [(2, "hi")], 200: [(4, "whatsup")]}) # TODO: arg shit
+    net = CentralizedNetwork([], exponential_latency(25), {2: [(0, "first txn")], 100: [(2, "hi")], 200: [(4, "whatsup")]}) # TODO: arg shit
     nodes = init_nodes(net, 50) # TODO: args shit
     net.assign_nodes(nodes)
 
