@@ -36,6 +36,10 @@ class Blockchain:
         return True
     
     def add_block_centralized(self, block):
+        # if int(block.data.split(" ")[-1]) == 
+        if block.data in self.previous_data:
+            return True
+        print(f"HERE {self.most_recent_block.block_id}")
         self.most_recent_block.next_block = block
         self.most_recent_block = block
         self.previous_data.add(block.data)

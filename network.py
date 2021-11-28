@@ -4,6 +4,8 @@
 
 from constants import BLOCK, TRANSACTION
 
+import random
+
 class Network:
     def __init__(self, nodes, latency_fn, schedule):
         self.nodes = nodes
@@ -13,6 +15,7 @@ class Network:
         self.consensus_times = {}
         self.incoming_messages = {} # maps from node id to a dictionary mapping times to (incoming data, type of packet)
         self.schedule = schedule
+        self.last_block_id = len(schedule)
         self.transaction_num = 1
         self.packets_sent = 0
         self.num_computations = 0
@@ -60,7 +63,7 @@ class Network:
             if 'LATENCY' in self.latencies[i]:
                 continue
             self.latencies[i]['LATENCY'] = self.time - self.latencies[i]['start']
-        print("LATENCIES", self.latencies)
+        print("LATENCIES", self.latencies, self.time)
     
     def calculate_consensus(self, ind):
         for i in range(1, ind+1):
@@ -87,7 +90,7 @@ class Network:
                 self.latencies[self.transaction_num] = {'start': self.time}
                 self.consensus_times[self.transaction_num] = {'start': self.time}
                 self.transaction_num += 1
-                self.add_transaciton(data, sender_id)
+                self.add_transaction(data, sender_id)
 
     def seperate_packets(self, packets):
         verified_blocks = []
@@ -109,7 +112,7 @@ class Network:
                 continue
 
             assert node.id in self.incoming_messages, f"node-{node.id} is not in the dictionary storing queues for nodes"
-            delay = self.latency_fn()
+            delay = self.latency_fn(sending_node_id, node.id)
             future_time = self.time + delay
             if future_time not in self.incoming_messages[node.id]:
                 self.incoming_messages[node.id][future_time] = []
@@ -127,11 +130,11 @@ class CentralizedNetwork(Network):
             self.incoming_messages[n.id] = {}
         self.centralized_server = self.nodes[0]
 
-    def add_transaciton(self, txn, sending_node_id):
+    def add_transaction(self, txn, sending_node_id):
         """
         Sends a new transaction to the centralized server to process
         """
-        delay = self.latency_fn()
+        delay = self.latency_fn(sending_node_id, self.centralized_server.id)
         future_time = self.time + delay
         if future_time not in self.incoming_messages[self.centralized_server.id]:
             self.incoming_messages[self.centralized_server.id][future_time] = []
@@ -140,21 +143,30 @@ class CentralizedNetwork(Network):
     
     def tick(self):
         print(self.num_computations, self.packets_sent)
+        old_lat = self.latencies.copy()
         ind = self.check_for_majority()
         consensus_ind = self.check_for_consensus()
         self.calculate_latency(ind)
         self.calculate_consensus(consensus_ind)
+        
+        if consensus_ind == self.last_block_id:
+            print(f"Latencies: {self.latencies}\nConsensus: {self.consensus_times}\nNumber of Computations: {self.num_computations}\nPackets Sent {self.packets_sent}")
+            return True
 
         self.apply_actions()     
 
         for node in self.nodes:
             # node checks if it has any actions at this time (send txn or add block) -- incoming messages
             incoming_packets = self.search_for_txns(node.id, self.time)
+            print(f"Node {node.id}", incoming_packets, self.time, old_lat)
             verified_blocks, transactions = self.seperate_packets(incoming_packets)
             for pkt in sorted(verified_blocks, key=lambda x: x.block_id):
+                print(f"Incoming pakcet {pkt.block_id} and {pkt.data}")
+                print("ADDING BLOCK")
                 node.add_block_centralized(pkt)
             for pkt in transactions:
                 new_block = node.ledger.process_txn(pkt)
+                node.add_block_centralized(new_block)
                 self.broadcast_block(new_block, node.id)
         self.time += 1
 
@@ -163,7 +175,7 @@ class ProofOfWorkNetwork(Network):
     def __init__(self, nodes, latency_fn, schedule):
         super().__init__(nodes, latency_fn, schedule)
     
-    def add_transaciton(self, txn, sending_node_id):
+    def add_transaction(self, txn, sending_node_id):
         """
         Sends a new transaction to the blockchain ledger to all neighboring nodes in the network
         """
@@ -176,7 +188,7 @@ class ProofOfWorkNetwork(Network):
                 continue
             
             assert node.id in self.incoming_messages, f"node-{node.id} is not in the dictionary storing queues for nodes"
-            delay = self.latency_fn()
+            delay = self.latency_fn(sending_node_id, node.id)
             future_time = self.time + delay
             if future_time not in self.incoming_messages[node.id]:
                 self.incoming_messages[node.id][future_time] = []
@@ -185,11 +197,15 @@ class ProofOfWorkNetwork(Network):
             self.packets_sent += 1
 
     def tick(self):
-        print(self.num_computations, self.packets_sent)
+        # print(self.num_computations, self.packets_sent)
         ind = self.check_for_majority()
         consensus_ind = self.check_for_consensus()
         self.calculate_latency(ind)
         self.calculate_consensus(consensus_ind)
+
+        if consensus_ind == self.last_block_id:
+            print(f"Latencies: {self.latencies}\nConsensus: {self.consensus_times}\nNumber of Computations: {self.num_computations}\nPackets Sent {self.packets_sent}")
+            return True
 
         self.apply_actions()     
 
@@ -215,3 +231,73 @@ class ProofOfWorkNetwork(Network):
 class ProofOfStakeNetwork(Network):
     def __init__(self, nodes, latency_fn, schedule):
         super().__init__(nodes, latency_fn, schedule)
+
+    def assign_nodes(self, nodes):
+        self.nodes = nodes
+        for n in self.nodes:
+            self.incoming_messages[n.id] = {}
+        self.validator_node_id = random.randint(0, len(self.nodes)-1)
+
+    def add_transaction(self, txn, sending_node_id):
+        """
+        Sends a new transaction to the validator node
+        """
+        validator_node = self.nodes[self.validator_node_id]
+        # don't need to send the sender the transaction it is sending out
+        if sending_node_id == validator_node.id:
+            if self.time not in self.incoming_messages[validator_node.id]:
+                self.incoming_messages[validator_node.id][self.time] = []
+            self.incoming_messages[validator_node.id][self.time].append((txn, TRANSACTION))
+            return
+        
+        assert validator_node.id in self.incoming_messages, f"node-{validator_node.id} is not in the dictionary storing queues for nodes"
+        delay = self.latency_fn(sending_node_id, self.validator_node_id)
+        future_time = self.time + delay
+        if future_time not in self.incoming_messages[validator_node.id]:
+            self.incoming_messages[validator_node.id][future_time] = []
+        # TODO: have a certain delay for each pair of hosts, see whats up 
+        self.incoming_messages[validator_node.id][future_time].append((txn, TRANSACTION))
+        self.packets_sent += 1
+        self.validator_node_id = random.randint(0, len(self.nodes) -1)
+
+
+    def tick(self):
+        print(self.num_computations, self.packets_sent)
+        ind = self.check_for_majority()
+        consensus_ind = self.check_for_consensus()
+        print(consensus_ind, self.last_block_id, consensus_ind == self.last_block_id)
+        self.calculate_latency(ind)
+        self.calculate_consensus(consensus_ind)
+
+        if consensus_ind == self.last_block_id:
+            print(f"Latencies: {self.latencies}\nConsensus: {self.consensus_times}\nNumber of Computations: {self.num_computations}\nPackets Sent {self.packets_sent}")
+            return True
+
+        self.apply_actions()     
+
+        for node in self.nodes:
+            # node checks if it has any actions at this time (send txn or add block) -- incoming messages
+            incoming_packets = self.search_for_txns(node.id, self.time)
+            verified_blocks, transactions = self.seperate_packets(incoming_packets)
+            for pkt in sorted(verified_blocks, key=lambda x: x.block_id):
+                node.add_block(pkt)
+            for pkt in transactions:
+                   node.ledger.add_incoming_txn(pkt)
+        
+        validator_node = self.nodes[self.validator_node_id]
+        res = validator_node.mine()
+        if res is not None:
+            new_block, num_computations = res
+            self.num_computations += num_computations
+            self.broadcast_block(new_block, self.validator_node_id)
+
+
+        for node in self.nodes:
+            res = node.mine()
+   
+            if res is not None:
+                new_block, num_computations = res
+                self.num_computations += num_computations
+                print(f"{node.id} just mined a new block with id: ", new_block.block_id, f"prev data {node.ledger.most_recent_block.data} vs {new_block.data}")
+                self.broadcast_block(new_block, node.id)
+        self.time += 1 

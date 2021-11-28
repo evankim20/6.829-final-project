@@ -1,7 +1,7 @@
 from cryptography.hazmat.primitives import serialization as crypto_serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.backends import default_backend as crypto_default_backend
-import random
+import numpy as np
 
 def generate_keys():
     """
@@ -29,5 +29,13 @@ def generate_keys():
 
     return public_key, private_key
 
-def exponential_latency(mean_latency):
-    return lambda: random.randint(mean_latency-30, mean_latency)
+def exponential_latency(mapping):
+    def calcuate_latency(start, end):
+        if (start, end) not in mapping and (end, start) not in mapping:
+            return np.random.poisson(500)
+        
+        if (start, end) in mapping:
+            return np.random.poisson(mapping[(start, end)])
+        if (end, start) in mapping:
+            return np.random.poisson(mapping[(end, start)])
+    return calcuate_latency

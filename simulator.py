@@ -21,6 +21,11 @@ parser.add_argument('--schedule',
                     type=str,
                     help="File name of the schedule for the current experiment",
 )
+parser.add_argument('--topo',
+                    type=str,
+                    help="Topology for  current experiment",
+                    default="equadistant"
+)
 # TODO: add argument about file to grab values from for latency matrix
 args = parser.parse_args()
 
@@ -40,6 +45,15 @@ def clean_up_json(data):
             new_v.append((int(timestamp), txn_data))
         clean_data[int(k)] = new_v
     return clean_data
+
+
+def create_topology(key, num_nodes):
+    topo = {}
+    if key == "equadistant":
+        for n1 in range(num_nodes):
+            for n2 in range(n1+1, num_nodes):
+                topo[(n1, n2)] = 300
+    return topo
         
 
 if __name__ == "__main__":
@@ -54,14 +68,14 @@ if __name__ == "__main__":
         schedule = json.load(f)
         clean_schedule = clean_up_json(schedule)
 
-    print(clean_schedule)
+    topo = create_topology(args.topo, args.nodes)
 
     if args.type == "pow":
-        net = ProofOfWorkNetwork([], exponential_latency(25), clean_schedule)
+        net = ProofOfWorkNetwork([], exponential_latency(topo), clean_schedule)
     elif args.type == "c":
-        net = CentralizedNetwork([], exponential_latency(25), clean_schedule)
+        net = CentralizedNetwork([], exponential_latency(topo), clean_schedule)
     elif args.type == "pos":
-        net = ProofOfStakeNetwork([], exponential_latency(25), clean_schedule)
+        net = ProofOfStakeNetwork([], exponential_latency(topo), clean_schedule)
     else:
         raise Exception(f"{args.type} is not a valid type")
     nodes = init_nodes(net, args.nodes) # TODO: args shit
@@ -70,4 +84,6 @@ if __name__ == "__main__":
     # configuration = text file load of all transactions that are trying to take place and latencies
 
     while True:
-        net.tick()
+        if net.tick():
+            print("All transactions have been verified")
+            break
