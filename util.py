@@ -30,6 +30,9 @@ def generate_keys():
     return public_key, private_key
 
 def exponential_latency(mapping):
+    """
+    Generates a function to calculate latencies from a Poisson distribution between two nodes
+    """
     def calcuate_latency(start, end):
         if (start, end) not in mapping and (end, start) not in mapping:
             return np.random.poisson(500)

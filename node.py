@@ -1,4 +1,6 @@
-
+"""
+Class that represents a user on the Bitcoin network
+"""
 
 from util import generate_keys
 from blockchain import Blockchain
@@ -17,11 +19,14 @@ class Node:
     def add_block(self, block):
         return self.ledger.add_block(block)
 
-    def send_transaction(self, txn):
-        self.net.add_transaction(txn)
-
     def add_block_centralized(self, pkt):
         self.ledger.add_block_centralized(pkt)
+
+    def send_transaction(self, txn):
+        """
+        Sends transaction to get processed
+        """
+        self.net.add_transaction(txn)
 
     def tick(self):
         # mine for a new block

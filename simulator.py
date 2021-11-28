@@ -1,12 +1,25 @@
+"""
+Simualates a network running.  Initializes all properties of the network and the schedule and topology that will be used
+for the current exercise.
+
+Usage:
+    ARGS:
+        --type (what type of consensus protocol to run: proof_of_work (pow), proof_of_stake (pos), or centralized (c))
+        --nodes (number of nodes to run experiment with)
+        --schedule (file name of the schedule that will run in a format that has time stamp mapped to a list of transactions
+                    that will happen)
+        --topo (topology to use; equadistant sets all nodes an equal distance apart)
+"""
+from argparse import ArgumentParser
+import json
+import os
+import time
+
 from block import Block
 from network import CentralizedNetwork, ProofOfStakeNetwork, ProofOfWorkNetwork
 from node import Node
 from util import exponential_latency
 
-from argparse import ArgumentParser
-import json
-import os
-import time
 
 parser = ArgumentParser(description="Bitcoin network basic simulation")
 parser.add_argument('--type',
@@ -26,11 +39,13 @@ parser.add_argument('--topo',
                     help="Topology for  current experiment",
                     default="equadistant"
 )
-# TODO: add argument about file to grab values from for latency matrix
 args = parser.parse_args()
 
 
 def init_nodes(net, n=3): 
+    """
+    Initialize the passed in number of nodes for our network
+    """
     genesis_block = Block(block_id=0, data="genesis block", timestamp=time.time())
     nodes = []
     for i in range(n):
@@ -38,6 +53,10 @@ def init_nodes(net, n=3):
     return nodes
 
 def clean_up_json(data):
+    """
+    Takes a json with all values typed string, and re-assigns them to be of the correct type
+    (integer keys, with lists of [int, str])
+    """
     clean_data = {}
     for k, v in data.items():
         new_v = []
@@ -48,6 +67,10 @@ def clean_up_json(data):
 
 
 def create_topology(key, num_nodes):
+    """
+    Based off of the passed in key and the number of nodes, returns a dictionary that
+    keeps track of the mean latency between a set of nodes
+    """
     topo = {}
     if key == "equadistant":
         for n1 in range(num_nodes):
@@ -62,14 +85,14 @@ if __name__ == "__main__":
     # if not os.path.exists(LOG_DIR):
     #     os.makedirs(LOG_DIR)
 
-    # TODO: grab schedule -- make sure to convert everything to int etc.
-    print(os.path.join("schedules", f"{args.schedule}.json"))
+    # grabbing the pre-determined schedule
     with open(os.path.join("schedules", f"{args.schedule}.json")) as f:
         schedule = json.load(f)
         clean_schedule = clean_up_json(schedule)
 
     topo = create_topology(args.topo, args.nodes)
 
+    # initialize the right network given the passed in type
     if args.type == "pow":
         net = ProofOfWorkNetwork([], exponential_latency(topo), clean_schedule)
     elif args.type == "c":
@@ -78,11 +101,10 @@ if __name__ == "__main__":
         net = ProofOfStakeNetwork([], exponential_latency(topo), clean_schedule)
     else:
         raise Exception(f"{args.type} is not a valid type")
-    nodes = init_nodes(net, args.nodes) # TODO: args shit
+    nodes = init_nodes(net, args.nodes)
     net.assign_nodes(nodes)
 
-    # configuration = text file load of all transactions that are trying to take place and latencies
-
+    # continues to increment time in the network until all transactions have been verfied across all nodes
     while True:
         if net.tick():
             print("All transactions have been verified")
