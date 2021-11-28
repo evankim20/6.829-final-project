@@ -1,18 +1,9 @@
 TODO: flesh this out more
 
-## VirtualEnv:
-TODO this will all be cleaned up using a shell script
-If virtual environment isn't set up:
+## Setup:
+Run the following command to get the virtual environment set up and dependencies downloaded
 ```
-virtualenv venv -p python3
-```
-
-Then run:
-```
-source ./source/bin/activate
-pip3 install numpy
-pip3 install cryptography
-...
+source setup.sh
 ```
 
 ## Usage:
