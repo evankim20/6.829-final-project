@@ -39,6 +39,10 @@ parser.add_argument('--topo',
                     help="Topology for  current experiment",
                     default="equadistant"
 )
+parser.add_argument('--name',
+                    type=str,
+                    help="Name of current experiment",
+)
 args = parser.parse_args()
 
 
@@ -75,15 +79,26 @@ def create_topology(key, num_nodes):
     if key == "equadistant":
         for n1 in range(num_nodes):
             for n2 in range(n1+1, num_nodes):
-                topo[(n1, n2)] = 300
+                topo[(n1, n2)] = 200
+    elif key == "wide-area":
+        q1 = num_nodes//4
+        q2 = 2*q1
+        q3 = 3*q1
+        for n1 in range(num_nodes):
+            for n2 in range(num_nodes):
+                if (n1 <= q1 and n2 <= q1) or (q1 < n1 <= q2 and q1 < n2 <= q2) or (q2 < n1 <= q3 and q2 < n2 <= q3) or (q3 < n1 <= num_nodes and q3 < n2 <= num_nodes):
+                    topo[(n1, n2)] = 200
+                else:
+                    topo[(n1, n2)] = 400
+    else:
+        raise Exception(f"Invalid key: {key} does not exist!  Try using 'equadistant' or 'wide-area'")
+
     return topo
         
 
 if __name__ == "__main__":
-    # TODO: flags for  time, num nodes, latency, etc...
-    # LOG_DIR = "plot"
-    # if not os.path.exists(LOG_DIR):
-    #     os.makedirs(LOG_DIR)
+    if not args.name:
+        raise Exception("Need to enter a valid name using the --name flag")
 
     # grabbing the pre-determined schedule
     with open(os.path.join("schedules", f"{args.schedule}.json")) as f:
@@ -106,6 +121,13 @@ if __name__ == "__main__":
 
     # continues to increment time in the network until all transactions have been verfied across all nodes
     while True:
-        if net.tick():
+        res = net.tick()
+        if res is not None:
             print("All transactions have been verified")
+            latencies, consensus, computations, packets = res
+            latencies["metrics"] = {"num_computations": computations, "num_packets": packets}
+
+            os.mkdir(f"results/{args.name}-{args.type}-{args.topo}-{args.nodes}-nodes")
+            with open(f"results/{args.name}-{args.type}-{args.topo}-{args.nodes}-nodes/results.json", 'w') as f:
+                json.dump(latencies, f)
             break

@@ -1,0 +1,130 @@
+{
+    "1": {
+        "start": 0,
+        "LATENCY": 505
+    },
+    "2": {
+        "start": 500,
+        "LATENCY": 1141
+    },
+    "3": {
+        "start": 1000,
+        "LATENCY": 1263
+    },
+    "4": {
+        "start": 1500,
+        "LATENCY": 963
+    },
+    "5": {
+        "start": 2000,
+        "LATENCY": 1227
+    },
+    "6": {
+        "start": 2500,
+        "LATENCY": 853
+    },
+    "7": {
+        "start": 3000,
+        "LATENCY": 891
+    },
+    "8": {
+        "start": 3500,
+        "LATENCY": 3154
+    },
+    "9": {
+        "start": 4000,
+        "LATENCY": 2947
+    },
+    "10": {
+        "start": 4500,
+        "LATENCY": 2740
+    },
+    "11": {
+        "start": 5000,
+        "LATENCY": 2590
+    },
+    "12": {
+        "start": 5500,
+        "LATENCY": 2579
+    },
+    "13": {
+        "start": 6000,
+        "LATENCY": 3550
+    },
+    "14": {
+        "start": 6500,
+        "LATENCY": 3098
+    },
+    "15": {
+        "start": 7000,
+        "LATENCY": 3090
+    },
+    "16": {
+        "start": 7500,
+        "LATENCY": 2621
+    },
+    "17": {
+        "start": 8000,
+        "LATENCY": 3733
+    },
+    "18": {
+        "start": 8500,
+        "LATENCY": 3411
+    },
+    "19": {
+        "start": 9000,
+        "LATENCY": 5435
+    },
+    "20": {
+        "start": 9500,
+        "LATENCY": 5510
+    },
+    "21": {
+        "start": 10000,
+        "LATENCY": 5096
+    },
+    "22": {
+        "start": 10500,
+        "LATENCY": 5630
+    },
+    "23": {
+        "start": 11000,
+        "LATENCY": 5756
+    },
+    "24": {
+        "start": 11500,
+        "LATENCY": 5947
+    },
+    "25": {
+        "start": 12000,
+        "LATENCY": 5751
+    },
+    "26": {
+        "start": 12500,
+        "LATENCY": 5859
+    },
+    "27": {
+        "start": 13000,
+        "LATENCY": 5537
+    },
+    "28": {
+        "start": 13500,
+        "LATENCY": 5120
+    },
+    "29": {
+        "start": 14000,
+        "LATENCY": 5486
+    },
+    "30": {
+        "start": 14500,
+        "LATENCY": 5413
+    },
+    "31": {
+        "start": 15000,
+        "LATENCY": 4987
+    },
+    "metrics": {
+        "num_computations": 19150,
+        "num_packets": 310
+    }
+}

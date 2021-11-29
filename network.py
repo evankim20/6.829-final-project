@@ -89,7 +89,6 @@ class Network:
             if 'LATENCY' in self.consensus_times[i]:
                 continue
             self.consensus_times[i]['LATENCY'] = self.time - self.consensus_times[i]['start']
-        print("CONSENSUS", self.consensus_times)
 
     def search_for_txns(self, node_id, timestamp):
         """
@@ -184,7 +183,7 @@ class CentralizedNetwork(Network):
         # termination condition
         if consensus_ind == self.last_block_id:
             print(f"Latencies: {self.latencies}\nConsensus: {self.consensus_times}\nNumber of Computations: {self.num_computations}\nPackets Sent {self.packets_sent}")
-            return True
+            return self.latencies, self.consensus_times, self.num_computations, self.packets_sent
 
         self.apply_actions()     
 
@@ -241,7 +240,7 @@ class ProofOfWorkNetwork(Network):
         # termination condition
         if consensus_ind == self.last_block_id:
             print(f"Latencies: {self.latencies}\nConsensus: {self.consensus_times}\nNumber of Computations: {self.num_computations}\nPackets Sent {self.packets_sent}")
-            return True
+            return self.latencies, self.consensus_times, self.num_computations, self.packets_sent
 
         self.apply_actions()     
 
@@ -315,7 +314,7 @@ class ProofOfStakeNetwork(Network):
         # termination condition
         if consensus_ind == self.last_block_id:
             print(f"Latencies: {self.latencies}\nConsensus: {self.consensus_times}\nNumber of Computations: {self.num_computations}\nPackets Sent {self.packets_sent}")
-            return True
+            return self.latencies, self.consensus_times, self.num_computations, self.packets_sent
 
         self.apply_actions()     
 
