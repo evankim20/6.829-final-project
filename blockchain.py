@@ -90,6 +90,36 @@ class Blockchain:
         new_block = Block(block_id=next_block_id, data=pkt, timestamp=time.time())
         return new_block
 
+    def mine_pos(self):
+        """
+        POS mining doesn't require computationally heavy methods to find nonce
+        """
+        # no incoming transactions to mine
+        if not self.unconfirmed_txns:
+            return None
+        prev_block = self.most_recent_block
+        next_block_id = prev_block.block_id + 1
+        next_block_data = self.unconfirmed_txns[0]
+        # stop working on mining a block if it has already been mined
+        while next_block_data in self.previous_data:
+            self.unconfirmed_txns.pop(0)
+            if len(self.unconfirmed_txns) == 0:
+                return None
+            next_block_data = self.unconfirmed_txns[0]
+        # new block
+        next_block = Block(block_id=next_block_id, data=next_block_data, timestamp=time.time(), previous_hash=prev_block.block_hash)
+        next_block.assign_hash()
+        proof = next_block.hash()
+        num_computations = 1
+
+        # successfully found the nonce 
+        if next_block.data not in self.previous_data:
+            # add to current Blockchain the newly mined block
+            self.add_block(next_block)
+        # remove the transaction from the list since we solved it
+        self.unconfirmed_txns.pop(0)
+        return next_block, num_computations
+
     def mine(self):
         """
         Perform the mining computation of working on an incoming transaction, finding the nonce, and calcuating the proof

@@ -329,7 +329,7 @@ class ProofOfStakeNetwork(Network):
         
         # validator node needs to mine block if there are awaiting transactions
         validator_node = self.nodes[self.validator_node_id]
-        res = validator_node.mine()
+        res = validator_node.mine_pos()
         # successful mined block
         if res is not None:
             new_block, num_computations = res
