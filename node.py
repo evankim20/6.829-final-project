@@ -16,6 +16,9 @@ class Node:
     def mine(self):
         return self.ledger.mine()
 
+    def mine_pos(self):
+        return self.ledger.mine_pos()
+
     def add_block(self, block):
         return self.ledger.add_block(block)
 
