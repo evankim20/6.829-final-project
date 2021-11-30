@@ -37,10 +37,7 @@ def average_latency(j):
     return total_lat / (len(j)-1)
 
 
-def save_bar_graph():
-    pow_data = json.load(open(f"results/{args.name}-pow-{args.topo}-{args.nodes}-nodes/results.json"))
-    pos_data = json.load(open(f"results/{args.name}-pos-{args.topo}-{args.nodes}-nodes/results.json"))
-    c_data = json.load(open(f"results/{args.name}-c-{args.topo}-{args.nodes}-nodes/results.json"))
+def save_bar_graph(pow_data, pos_data, c_data):
     pow_av = average_latency(pow_data)
     pos_av = average_latency(pos_data)
     c_av = average_latency(c_data)
@@ -50,14 +47,43 @@ def save_bar_graph():
     plt.ylabel("Average Latency")
     plt.title("Latency Depending on Protocol")
     utils.mkdir_if_not_exists(f"graphs/{args.name}-{args.topo}-{args.nodes}-nodes")
-    plt.savefig(f"graphs/{args.name}-{args.topo}-{args.nodes}-nodes/figure.png")
+    plt.savefig(f"graphs/{args.name}-{args.topo}-{args.nodes}-nodes/average_latencies.png")
 
 
+def save_line_graph(pow_data, pos_data, c_data):
+    start_time_arrays = []
+    latency_arrays = []
+    for data in [pow_data, pos_data, c_data]:
+        start_times = []
+        latencies = []
+        for key, val in data.items():
+            if "LATENCY" in val:
+                start_times.append(val["start"])
+                latencies.append(val["LATENCY"])
+        start_time_arrays.append(start_times)
+        latency_arrays.append(latencies)
+    for i in range(3):
+        if i == 0:
+            label = "Proof of Work"
+        elif i == 1:
+            label = "Proof of Stake"
+        else:
+            label = "Centralized"
+        plt.plot(start_time_arrays[i], latency_arrays[i], label=label)
+        plt.legend()
+    plt.xlabel("Start Times")
+    plt.ylabel("Latency")
+    plt.title("Latencies Over Time")
+    plt.savefig(f"graphs/{args.name}-{args.topo}-{args.nodes}-nodes/latency_over_time.png")
 
 
 def main():
-    if args.type == "none":
-        save_bar_graph()
+    pow_data = json.load(open(f"results/{args.name}-pow-{args.topo}-{args.nodes}-nodes/results.json"))
+    pos_data = json.load(open(f"results/{args.name}-pos-{args.topo}-{args.nodes}-nodes/results.json"))
+    c_data = json.load(open(f"results/{args.name}-c-{args.topo}-{args.nodes}-nodes/results.json"))
+    save_bar_graph(pow_data, pos_data, c_data)
+    plt.clf()
+    save_line_graph(pow_data, pos_data, c_data)
 
 
 
