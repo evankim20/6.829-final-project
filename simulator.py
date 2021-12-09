@@ -19,6 +19,7 @@ from block import Block
 from network import CentralizedNetwork, ProofOfStakeNetwork, ProofOfWorkNetwork
 from node import Node
 from util import exponential_latency
+import utils
 
 
 parser = ArgumentParser(description="Bitcoin network basic simulation")
@@ -127,7 +128,7 @@ if __name__ == "__main__":
             latencies, consensus, computations, packets = res
             latencies["metrics"] = {"num_computations": computations, "num_packets": packets}
 
-            os.mkdir(f"results/{args.name}-{args.type}-{args.topo}-{args.nodes}-nodes")
+            utils.mkdir_if_not_exists(f"results/{args.name}-{args.type}-{args.topo}-{args.nodes}-nodes")
             with open(f"results/{args.name}-{args.type}-{args.topo}-{args.nodes}-nodes/results.json", 'w') as f:
                 json.dump(latencies, f)
             break

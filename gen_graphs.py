@@ -79,6 +79,15 @@ def save_bar_graphs(pow_data, pos_data, c_data):
     plt.title("Packets Depending on Protocol for " + topo + " Topology")
     utils.mkdir_if_not_exists(f"graphs/{args.name}-{args.topo}-{args.nodes}-nodes")
     plt.savefig(f"graphs/{args.name}-{args.topo}-{args.nodes}-nodes/total_packets.png")
+    # packets / latency
+    plt.clf()
+    data = {"Centralized" : packets(c_data) / average_latency(c_data), "Proof of Work": packets(pow_data) / average_latency(pow_data), "Proof of Stake": packets(pos_data) / average_latency(pos_data)}
+    plt.bar(list(data.keys()), list(data.values()), color = 'green', width = 0.4)
+    plt.xlabel("Type of Protocol")
+    plt.ylabel("Packets / Latency")
+    plt.title("Throughput Depending on Protocol for " + topo + " Topology")
+    utils.mkdir_if_not_exists(f"graphs/{args.name}-{args.topo}-{args.nodes}-nodes")
+    plt.savefig(f"graphs/{args.name}-{args.topo}-{args.nodes}-nodes/packets_over_latency.png")
 
 
 def save_line_graph(pow_data, pos_data, c_data):
